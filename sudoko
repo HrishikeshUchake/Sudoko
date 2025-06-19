@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sudoku Solver & Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      text-align: center;
+      padding: 30px;
+    }
+    table {
+      margin: auto;
+      border-collapse: collapse;
+    }
+    td {
+      border: 1px solid #999;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+    }
+    input {
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      font-size: 18px;
+      border: none;
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sudoku Solver & Generator</h1>
+  <table id="gui"></table>
+  <div class="controls">
+    <button onclick="load_sudoku()">Load Puzzle</button>
+    <button onclick="solve_sudoku(false)">Solve Puzzle</button>
+    <button onclick="generate_sudoku()">Generate Puzzle</button>
+    <button onclick="clear_gui()">Clear</button>
+  </div>
+  <script>
+    var cells = [];
+
+    function import_puzzle () {
+      return [[0,0,0,2,6,0,7,0,1],[6,8,0,0,7,0,0,9,0],[1,9,0,0,0,4,5,0,0],[8,2,0,1,0,0,0,4,0],[0,0,4,6,0,2,9,0,0],[0,5,0,0,0,3,0,2,8],[0,0,9,3,0,0,0,7,4],[0,4,0,0,5,0,0,3,6],[7,0,3,0,1,8,0,0,0]];
+    }
+
+    function sudoku_GUI() {
+      var table = document.getElementById("gui");
+      for (var r = 0; r < 9; r++) {
+        var row = document.createElement("tr");
+        for (var c = 0; c < 9; c++) {
+          var input = document.createElement("input");
+          input.type = "text";
+          input.maxLength = 1;
+          input.dataset.row = r;
+          input.dataset.column = c;
+          input.dataset.square = square_number(r, c);
+          input.dataset.a = 0;
+          input.onkeypress = validate;
+          var cell = document.createElement("td");
+          cell.appendChild(input);
+          row.appendChild(cell);
+          cells.push(input);
+        }
+        table.appendChild(row);
+      }
+    }
+
+    function validate(evt) {
+      evt = (evt) ? evt : window.event;
+      var key = evt.keyCode || evt.which;
+      key = String.fromCharCode(key);
+      if (!/[1-9]/.test(key)) {
+        evt.returnValue = false;
+        if (evt.preventDefault) evt.preventDefault();
+      }
+    }
+
+    function square_number(row, column) {
+      return Math.floor(row / 3) * 3 + Math.floor(column / 3);
+    }
+
+    function valid_check(cell, value) {
+      for (var i = 0; i < cells.length; i++) {
+        if (cells[i] !== cell && (
+          (cells[i].dataset.row == cell.dataset.row ||
+          cells[i].dataset.column == cell.dataset.column ||
+          cells[i].dataset.square == cell.dataset.square) &&
+          cells[i].value == value)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function solve_sudoku(random_row) {
+  var i = 0, n = 0, m = 1;
+  var nums = [1,2,3,4,5,6,7,8,9];
+  if (random_row) nums = shuffle([...nums]); // Shuffle a copy
+
+  while (true) {
+    if (i < 9 && random_row) {
+      cells[i].value = nums[i];
+      i++;
+    } else if (parseInt(cells[i].dataset.a) === 1) {
+      let nextVal = [1,2,3,4,5,6,7,8,9][n];
+      if (!nextVal) { // safeguard
+        cells[i].value = ""; i--; m = 0;
+        while (i >= 0 && parseInt(cells[i].dataset.a) !== 1) i--;
+        n = cells[i].value ? parseInt(cells[i].value) : 0;
+        continue;
+      }
+      if (valid_check(cells[i], nextVal)) {
+        cells[i].value = nextVal;
+        i++; n = 0; m = 1;
+      } else {
+        n++;
+      }
+    } else {
+      m ? i++ : i--;
+    }
+    if (i == 81) break;
+  }
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+
+    function generate_sudoku() {
+  clear_gui(); // Add this line to reset state
+  cells.forEach(cell => cell.dataset.a = 1);
+  solve_sudoku(true);
+  cells.forEach(cell => {
+    if (Math.random() < 0.33) cell.value = "";
+  });
+  cells.forEach(cell => {
+    if (cell.value) cell.dataset.a = 0;
+  });
+}
+
+
+    function load_sudoku() {
+      var i = 0, sudoku = import_puzzle();
+      for (var r = 0; r < 9; r++) {
+        for (var c = 0; c < 9; c++) {
+          var val = sudoku[r][c];
+          cells[i].value = val ? val : "";
+          cells[i].dataset.a = val ? 0 : 1;
+          i++;
+        }
+      }
+    }
+
+    function clear_gui() {
+      cells.forEach(cell => {
+        cell.value = "";
+        cell.dataset.a = 0;
+      });
+    }
+
+    sudoku_GUI();
+  </script>
+</body>
+</html>
