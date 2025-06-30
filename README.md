@@ -11,7 +11,7 @@ Tiny Sudoku app in plain HTML, CSS, and JavaScript.
 
 ## How to Use
 
-1. Open `index.html` in your browser.
+1. Open `sudoku.html` in your browser.
 2. Click buttons. Sudoku happens.
 
 ## Why?
